@@ -11,7 +11,6 @@ import SupportIcon from '@/assets/icons/support.svg'
 import BaseIconButton from '@/components/buttons/iconButton.vue'
 import { storeToRefs } from 'pinia'
 import { useUIStore } from '@/stores/uiStore'
-import { watch } from 'vue'
 
 const props = defineProps<{
   permanent: boolean // Для определения режима (desktop/mobile)
@@ -20,10 +19,6 @@ const props = defineProps<{
 const uiStore = useUIStore()
 const { isDrawerCollapsed, isDrawerVisible } = storeToRefs(uiStore)
 const { toggleDrawerCollapse, toggleDrawerVisibility } = uiStore
-
-watch(isDrawerVisible, (val) => {
-  console.log('Drawer visible changed:', val)
-})
 
 const navItems = [
   { icon: DashboardIcon, title: 'Дэшборд', to: '/' },
