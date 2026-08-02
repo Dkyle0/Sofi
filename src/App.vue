@@ -3,12 +3,5 @@ import { RouterView } from 'vue-router'
 </script>
 
 <template>
-  <router-view />
+  <RouterView />
 </template>
-
-<style>
-.v-navigation-drawer[app] {
-  top: 91px !important;
-  height: calc(100% - 91px) !important;
-}
-</style>

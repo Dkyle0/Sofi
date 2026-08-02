@@ -1,54 +1,56 @@
-# vue-project
+# Sofi frontend
 
-This template should help get you started developing with Vue 3 in Vite.
+Демонстрационный frontend Sofi на Vue 3, Vuetify 4.1 и Pinia. По умолчанию приложение полностью работает на моках и не требует backend.
 
-## Recommended IDE Setup
+## Требования
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
-
-## Recommended Browser Setup
-
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd) 
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
-
-## Type Support for `.vue` Imports in TS
-
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
+- Node.js `24.18.0`;
+- npm `11.6.2`.
 
 ```sh
-npm install
+npm ci
+npm run dev
 ```
 
-### Compile and Hot-Reload for Development
+## Demo-режим
+
+`VITE_API_MODE=mock` — режим по умолчанию. MSW перехватывает все API-вызовы в браузере.
+
+Учётная запись:
+
+- логин: `demo@sofi.local`;
+- пароль: `Demo123!`.
+
+Для проверки ошибок можно добавить query-параметр, например:
+
+```text
+http://127.0.0.1:5173/auth?mockScenario=invalid-login
+```
+
+Доступные сценарии: `happy`, `invalid-login`, `session-expired`, `industries-error`, `vacancy-error`, `slow`.
+
+## Real API
+
+Реальный backend включается только явно: скопируйте `.env.example` в `.env.local` и укажите
+`VITE_API_MODE=real`.
 
 ```sh
 npm run dev
 ```
 
-### Type-Check, Compile and Minify for Production
+В этом режиме Vite включает proxy для существующих относительных API-путей. Для обычной демонстрации этот режим не нужен.
+
+## Команды
 
 ```sh
-npm run build
-```
-
-### Run Unit Tests with [Vitest](https://vitest.dev/)
-
-```sh
-npm run test:unit
-```
-
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
+npm run dev
+npm run type-check
 npm run lint
+npm run lint:fix
+npm run format:check
+npm run format
+npm run build
+npm run check
 ```
+
+Подробные правила сопровождения находятся в [CLAUDE.md](CLAUDE.md).

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import DashboardIcon from '@/assets/icons/dashboard.svg'
 import PositionIcon from '@/assets/icons/positions.svg'
 import ResponsesIcon from '@/assets/icons/responses.svg'
@@ -8,20 +9,26 @@ import VacanciesIcon from '@/assets/icons/vacancies.svg'
 import ChevronLeftIcon from '@/assets/icons/chevron-left.svg'
 import InstructionIcon from '@/assets/icons/instruction.svg'
 import SupportIcon from '@/assets/icons/support.svg'
-import BaseIconButton from '@/components/buttons/iconButton.vue'
-import { storeToRefs } from 'pinia'
-import { useUIStore } from '@/stores/uiStore'
+import { BaseIconButton } from '@/shared/ui'
 
 const props = defineProps<{
-  permanent: boolean // Для определения режима (desktop/mobile)
+  modelValue: boolean
+  permanent: boolean
+  collapsed: boolean
 }>()
 
-const uiStore = useUIStore()
-const { isDrawerCollapsed, isDrawerVisible } = storeToRefs(uiStore)
-const { toggleDrawerCollapse, toggleDrawerVisibility } = uiStore
+const emit = defineEmits<{
+  'update:modelValue': [value: boolean]
+  'toggle-collapse': []
+}>()
+
+const drawerVisible = computed({
+  get: () => props.modelValue,
+  set: (value: boolean) => emit('update:modelValue', value),
+})
 
 const navItems = [
-  { icon: DashboardIcon, title: 'Дэшборд', to: '/' },
+  { icon: DashboardIcon, title: 'Дэшборд', to: { name: 'Dashboard' } },
   { icon: PositionIcon, title: 'Позиции', to: '/positions' },
   { icon: ResponsesIcon, title: 'Отклики', to: '/responses' },
   { icon: SubscriptionIcon, title: 'Подписка', to: '/subscription' },
@@ -29,36 +36,37 @@ const navItems = [
   { icon: VacanciesIcon, title: 'Вакансии', to: '/vacancies' },
 ]
 
-// Логика закрытия / переключения
-const handleToggle = () => {
+function handleToggle() {
   if (props.permanent) {
-    toggleDrawerCollapse()
-  } else {
-    toggleDrawerVisibility()
+    emit('toggle-collapse')
+    return
   }
+
+  drawerVisible.value = false
 }
 </script>
 
 <template>
   <v-navigation-drawer
-    v-model="isDrawerVisible"
+    v-model="drawerVisible"
     app
     :permanent="permanent"
     width="280"
     :rail-width="104"
-    :rail="isDrawerCollapsed && permanent"
+    :rail="collapsed && permanent"
     color="white"
     elevation="0"
     class="py-10"
   >
     <div class="d-flex align-center pa-0 ma-0">
       <BaseIconButton
-        background-color="#f3f3f3"
+        background-color="var(--color-background)"
+        label="Свернуть или развернуть меню"
         class="toggle-icon"
         disable-hover
         @click="handleToggle"
       >
-        <ChevronLeftIcon :class="{ 'is-rotated': isDrawerCollapsed && permanent }" />
+        <ChevronLeftIcon :class="{ 'is-rotated': collapsed && permanent }" />
       </BaseIconButton>
     </div>
 
@@ -73,24 +81,18 @@ const handleToggle = () => {
         active-class="custom-active-list-item"
         class="menu-item"
       >
-        <template v-slot:prepend>
+        <template #prepend>
           <component :is="item.icon" class="nav-icon" />
         </template>
-        <v-list-item-title
-          v-if="!(isDrawerCollapsed && permanent)"
-          class="ml-5 list-item-title-animated"
-          >{{ item.title }}</v-list-item-title
-        >
+        <v-list-item-title v-if="!(collapsed && permanent)" class="ml-5 list-item-title-animated">
+          {{ item.title }}
+        </v-list-item-title>
       </v-list-item>
     </v-list>
 
-    <template v-slot:append>
-      <div class="naw-down-info">
-        <v-card
-          v-if="!(isDrawerCollapsed && permanent)"
-          flat
-          class="naw-down-info-element v-card-animated"
-        >
+    <template #append>
+      <div class="drawer-footer">
+        <v-card v-if="!(collapsed && permanent)" flat class="drawer-footer-element v-card-animated">
           <ResponsesIcon />
           <div class="responses-info">
             <span class="responses-info-data">0 из 20</span>
@@ -100,30 +102,28 @@ const handleToggle = () => {
 
         <BaseIconButton
           elevation="0"
+          label="Инструкция"
           width="100%"
           height="100%"
           padding="12px 40px"
-          class="naw-down-info-element"
+          class="drawer-footer-element"
         >
           <div class="responses-info-btn">
-            <span v-if="!(isDrawerCollapsed && permanent)" class="button-text-animated"
-              >Инструкция</span
-            >
+            <span v-if="!(collapsed && permanent)" class="button-text-animated">Инструкция</span>
             <InstructionIcon />
           </div>
         </BaseIconButton>
 
         <BaseIconButton
           elevation="0"
+          label="Поддержка"
           width="100%"
           height="100%"
           padding="12px 40px"
-          class="naw-down-info-element"
+          class="drawer-footer-element"
         >
           <div class="responses-info-btn">
-            <span v-if="!(isDrawerCollapsed && permanent)" class="button-text-animated"
-              >Поддержка</span
-            >
+            <span v-if="!(collapsed && permanent)" class="button-text-animated">Поддержка</span>
             <SupportIcon />
           </div>
         </BaseIconButton>
@@ -133,33 +133,29 @@ const handleToggle = () => {
 </template>
 
 <style scoped>
-.list-item-title-animated {
-  transition:
-    opacity 0.3s ease-in-out,
-    transform 0.3s ease-in-out;
-}
-
-.v-card-animated {
-  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
+.list-item-title-animated,
+.v-card-animated,
 .button-text-animated {
-  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
 }
 
-.naw-down-info {
-  transition: all 0.3s ease-in-out;
-}
-
-:deep(.v-navigation-drawer--rail) .naw-down-info-element {
+:deep(.v-navigation-drawer--rail) .drawer-footer-element {
   justify-content: center;
-  padding: 10px;
   gap: 0;
+  padding: 10px;
+}
+
+.toggle-icon {
+  margin-bottom: 30px;
+  margin-left: 27px;
 }
 
 .toggle-icon :deep(svg) {
   transition: transform 0.3s ease-in-out;
 }
+
 .is-rotated {
   transform: rotate(-180deg);
 }
@@ -167,8 +163,8 @@ const handleToggle = () => {
 .nav-icon {
   width: 26px;
   height: 26px;
-  fill: currentColor;
   color: currentColor;
+  fill: currentColor;
   transition:
     color 0.3s ease-in-out,
     fill 0.3s ease-in-out;
@@ -177,39 +173,28 @@ const handleToggle = () => {
 .v-list-item--nav .v-list-item-title {
   font-size: 18px;
 }
-.menu-item {
-  padding: 18px 40px;
-  height: 63px;
-  text-decoration: none;
-  color: #8b8b8b;
-  transition: all 0.3s;
-  font-size: 18px !important;
-  font-family: 'Wix Madefor Display';
-  line-height: 100%;
-  letter-spacing: 0%;
-  vertical-align: middle;
-  position: relative;
-}
 
-.toggle-icon {
-  margin-left: 27px;
-  margin-bottom: 30px;
+.menu-item {
+  position: relative;
+  height: 63px;
+  padding: 18px 40px;
+  color: #8b8b8b;
+  font-family: var(--font-sans);
+  font-size: 18px !important;
+  line-height: 1;
+  text-decoration: none;
+  transition: color 0.3s ease;
 }
 
 .menu-item.custom-active-list-item .v-list-item-title,
-.menu-item.custom-active-list-item .nav-icon {
-  color: #0057ff;
-  fill: #0057ff;
-  font-weight: 600;
-}
-
+.menu-item.custom-active-list-item .nav-icon,
 .menu-item:hover .v-list-item-title,
 .menu-item:focus-visible .v-list-item-title,
 .menu-item:hover .nav-icon,
 .menu-item:focus-visible .nav-icon {
-  color: #0057ff !important;
-  fill: #0057ff !important;
-  transition: all 0.3s ease-in-out;
+  color: var(--color-primary) !important;
+  fill: var(--color-primary) !important;
+  font-weight: 600;
 }
 
 :deep(.menu-item:hover .v-list-item__overlay),
@@ -222,28 +207,25 @@ const handleToggle = () => {
   background-color: transparent !important;
 }
 
-.naw-down-info {
+.drawer-footer {
   display: flex;
   flex-direction: column;
-  gap: 20px;
   align-items: center;
   justify-content: center;
+  gap: var(--space-5);
   padding: 10px;
   margin: 0 15px;
-  transition: transform 0.3s ease-in-out;
 }
 
-.naw-down-info-element {
+.drawer-footer-element {
   display: flex;
-  padding: 10px 30px;
-  background-color: #f5f5f5;
-  border-radius: 12px;
-  width: 100%;
   align-items: center;
   justify-content: center;
-  opacity: 1;
-  transition: transform 0.3s ease-in-out;
+  width: 100%;
   gap: 10px;
+  padding: 10px 30px;
+  border-radius: var(--radius-control);
+  background-color: var(--color-surface-muted);
 }
 
 .responses-info {
@@ -252,28 +234,22 @@ const handleToggle = () => {
 }
 
 .responses-info-data {
-  font-weight: 600;
-  font-size: 16px;
   color: #222;
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .responses-info-text {
-  font-weight: 400;
-  font-size: 14px;
   color: #8b8b8b;
-  transition: transform 0.3s ease-in-out;
+  font-size: 14px;
 }
 
 .responses-info-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
   height: 100%;
-  font-weight: 600 !important;
-}
-
-.responses-info-btn :hover {
-  transition: color 0.3s ease;
+  gap: 10px;
+  font-weight: 600;
 }
 </style>

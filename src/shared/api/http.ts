@@ -1,6 +1,11 @@
 import axios from 'axios'
-import { useAuthStore } from '@/stores/authStore'
-import router from '@/router'
+
+// REAL API TRANSPORT: в обычном demo-режиме эти запросы перехватывает MSW.
+let unauthorizedHandler: (() => void) | undefined
+
+export function registerUnauthorizedHandler(handler: () => void) {
+  unauthorizedHandler = handler
+}
 
 export const http = axios.create({
   baseURL: '',
@@ -14,12 +19,8 @@ export const http = axios.create({
 http.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && error.response.status === 401) {
-      const authStore = useAuthStore()
-      authStore.user = null
-      if (router && router.currentRoute.value.path !== '/login') {
-        router.replace('/login')
-      }
+    if (error.response?.status === 401) {
+      unauthorizedHandler?.()
     }
     return Promise.reject(error)
   },

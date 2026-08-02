@@ -1,0 +1,10 @@
+// Keep JavaScript useDisplay thresholds and Sass grid media queries in sync
+// during the Vuetify 4 compatibility phase.
+@forward 'vuetify/settings' with (
+  $grid-breakpoints: (
+    'md': 960px,
+    'lg': 1280px,
+    'xl': 1920px,
+    'xxl': 2560px,
+  )
+);

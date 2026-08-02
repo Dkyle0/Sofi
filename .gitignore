@@ -27,6 +27,7 @@ coverage
 *.tsbuildinfo
 
 .eslintcache
+CLAUDE.md
 
 # Cypress
 /cypress/videos/

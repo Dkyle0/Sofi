@@ -1,45 +1,42 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
 import AccountPanel from '@/components/header/components/AccountPanel.vue'
 import LogoIcon from '@/assets/icons/logo.svg'
-import { useRouter } from 'vue-router'
+
+defineEmits<{
+  'toggle-mobile-menu': []
+}>()
 
 const router = useRouter()
 
-const goToDashboard = () => {
-  router.push({ name: 'Dashboard' })
+function goToDashboard() {
+  void router.push({ name: 'Dashboard' })
 }
 </script>
 
 <template>
   <v-app-bar app height="90" color="white" elevation="0" class="app-header">
     <div class="py-5 px-10 d-flex align-center h-100 w-100">
-      <v-toolbar-title class="d-flex align-center cursor-pointer">
-        <LogoIcon color="black" class="cursor-pointer" @click="goToDashboard" />
+      <v-toolbar-title class="d-flex align-center">
+        <v-btn
+          aria-label="Перейти на главную"
+          variant="text"
+          class="logo-button"
+          @click="goToDashboard"
+        >
+          <LogoIcon color="black" />
+        </v-btn>
       </v-toolbar-title>
 
       <v-spacer />
-      <AccountPanel />
+      <AccountPanel @toggle-mobile-menu="$emit('toggle-mobile-menu')" />
     </div>
   </v-app-bar>
 </template>
 
 <style scoped>
-.user-profile-wrapper {
-  transition: opacity 0.2s ease;
-}
-.user-profile-wrapper:hover {
-  opacity: 0.9;
-}
-
-.menu-down-icon {
-  color: #9e9e9e;
-  transition: transform 0.2s;
-}
-
-.text-caption a.hover-effect {
-  transition: color 0.2s;
-}
-.text-caption a.hover-effect:hover {
-  color: var(--v-theme-primary) !important;
+.logo-button {
+  min-width: 0;
+  padding: 0;
 }
 </style>

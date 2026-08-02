@@ -11,7 +11,7 @@ const goHome = () => {
 <template>
   <v-container
     fluid
-    class="fill-height d-flex flex-column align-center justify-center text-center not-found-container"
+    class="fill-height d-flex flex-column flex-wrap align-center justify-center text-center not-found-container"
   >
     <div class="error-code">404</div>
     <div class="error-title mt-4 mb-2">Страница не найдена</div>

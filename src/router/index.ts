@@ -1,14 +1,11 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
-import AppLayout from '@/layouts/AppLayout.vue'
-import SearchSettingsPage from '@/pages/SearchSettingsPage.vue'
-import StubPage from '@/pages/StubPage.vue'
-import NotFoundPage from '@/pages/NotFoundPage.vue'
-import { useAuthStore } from '@/stores/authStore'
+import { useAuthStore } from '@/features/auth'
 
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
-    component: AppLayout,
+    component: () => import('@/layouts/AppLayout.vue'),
+    meta: { requiresAuth: true },
     children: [
       {
         path: '',
@@ -24,30 +21,30 @@ const routes: Array<RouteRecordRaw> = [
       {
         path: 'positions',
         name: 'Positions',
-        component: SearchSettingsPage,
+        component: () => import('@/pages/SearchSettingsPage.vue'),
       },
       {
         path: 'responses',
         name: 'Responses',
-        component: StubPage,
+        component: () => import('@/pages/StubPage.vue'),
         props: { title: 'Отклики' },
       },
       {
         path: 'subscription',
         name: 'Subscription',
-        component: StubPage,
+        component: () => import('@/pages/StubPage.vue'),
         props: { title: 'Подписка' },
       },
       {
         path: 'interviews',
         name: 'Interviews',
-        component: StubPage,
+        component: () => import('@/pages/StubPage.vue'),
         props: { title: 'Интервью' },
       },
       {
         path: 'vacancies',
         name: 'Vacancies',
-        component: StubPage,
+        component: () => import('@/pages/StubPage.vue'),
         props: { title: 'Вакансии' },
       },
     ],
@@ -56,11 +53,12 @@ const routes: Array<RouteRecordRaw> = [
     path: '/auth',
     name: 'Auth',
     component: () => import('@/pages/AuthPage.vue'),
+    meta: { guestOnly: true },
   },
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
-    component: NotFoundPage,
+    component: () => import('@/pages/NotFoundPage.vue'),
   },
 ]
 
@@ -69,12 +67,18 @@ export const router = createRouter({
   routes,
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to) => {
   const auth = useAuthStore()
-  if (!auth.isAuthenticated && to.path !== '/auth') {
-    next('/auth')
-  } else {
-    next()
+
+  if (to.matched.some((record) => record.meta.requiresAuth) && !auth.isAuthenticated) {
+    return {
+      name: 'Auth',
+      query: { redirect: to.fullPath },
+    }
+  }
+
+  if (to.meta.guestOnly && auth.isAuthenticated) {
+    return { name: 'Dashboard' }
   }
 })
 
