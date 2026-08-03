@@ -1,15 +1,15 @@
 import type { IndustryCategory } from '@/entities/industry'
 import type { AuthUserDto } from '@/features/auth'
-export { demoCredentials as mockCredentials } from '@/shared/config/demo'
-import { demoCredentials } from '@/shared/config/demo'
+export { demoCredentials as mockCredentials } from '@/shared/config'
+import { demoCredentials } from '@/shared/config'
 
 export const mockUser: AuthUserDto = {
   user_id: 'demo-user-1',
   email: demoCredentials.username,
-  name: 'Демо Пользователь',
+  name: 'София Орлова',
   gender: 'not_specified',
-  first_name: 'Демо',
-  last_name: 'Пользователь',
+  first_name: 'София',
+  last_name: 'Орлова',
   phone: null,
   telegram: null,
   portfolio_link: null,

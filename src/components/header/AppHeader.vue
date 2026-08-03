@@ -16,7 +16,7 @@ function goToDashboard() {
 
 <template>
   <v-app-bar app height="90" color="white" elevation="0" class="app-header">
-    <div class="py-5 px-10 d-flex align-center h-100 w-100">
+    <div class="app-header__content py-5 px-10 d-flex align-center h-100 w-100">
       <v-toolbar-title class="d-flex align-center">
         <v-btn
           aria-label="Перейти на главную"
@@ -28,7 +28,6 @@ function goToDashboard() {
         </v-btn>
       </v-toolbar-title>
 
-      <v-spacer />
       <AccountPanel @toggle-mobile-menu="$emit('toggle-mobile-menu')" />
     </div>
   </v-app-bar>
@@ -38,5 +37,17 @@ function goToDashboard() {
 .logo-button {
   min-width: 0;
   padding: 0;
+}
+
+@media (max-width: 599px) {
+  .app-header__content {
+    padding-right: 12px !important;
+    padding-left: 12px !important;
+  }
+
+  .logo-button :deep(svg) {
+    width: 110px;
+    height: auto;
+  }
 }
 </style>

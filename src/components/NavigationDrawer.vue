@@ -15,6 +15,9 @@ const props = defineProps<{
   modelValue: boolean
   permanent: boolean
   collapsed: boolean
+  dailyResponsesUsed?: number
+  dailyResponsesLimit?: number
+  isDailyResponsesLoading?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -95,7 +98,13 @@ function handleToggle() {
         <v-card v-if="!(collapsed && permanent)" flat class="drawer-footer-element v-card-animated">
           <ResponsesIcon />
           <div class="responses-info">
-            <span class="responses-info-data">0 из 20</span>
+            <span class="responses-info-data" aria-live="polite">
+              {{
+                isDailyResponsesLoading
+                  ? `— из ${dailyResponsesLimit ?? 20}`
+                  : `${dailyResponsesUsed ?? 0} из ${dailyResponsesLimit ?? 20}`
+              }}
+            </span>
             <span class="responses-info-text">Суточных откликов</span>
           </div>
         </v-card>

@@ -15,8 +15,7 @@ const routes: Array<RouteRecordRaw> = [
       {
         path: 'dashboard',
         name: 'Dashboard',
-        component: () => import('@/pages/StubPage.vue'),
-        props: { title: 'Дэшборд' },
+        component: () => import('@/pages/DashboardPage.vue'),
       },
       {
         path: 'positions',

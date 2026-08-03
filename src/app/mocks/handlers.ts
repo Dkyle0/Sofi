@@ -2,27 +2,7 @@ import { delay, HttpResponse, http } from 'msw'
 import { mockCredentials, mockIndustries, mockUser } from '@/app/mocks/fixtures'
 import { clearMockSession, createMockSession, hasMockSession } from '@/app/mocks/storage'
 import type { VacancySearchRequestDto } from '@/features/vacancy-search'
-
-type MockScenario =
-  'happy' | 'invalid-login' | 'session-expired' | 'industries-error' | 'vacancy-error' | 'slow'
-
-function getScenario(): MockScenario {
-  const scenario = new URLSearchParams(window.location.search).get('mockScenario')
-  const allowedScenarios: MockScenario[] = [
-    'happy',
-    'invalid-login',
-    'session-expired',
-    'industries-error',
-    'vacancy-error',
-    'slow',
-  ]
-
-  return allowedScenarios.includes(scenario as MockScenario) ? (scenario as MockScenario) : 'happy'
-}
-
-function getDelay(defaultDelay: number) {
-  return getScenario() === 'slow' ? 2000 : defaultDelay
-}
+import { getMockDelay, getMockScenario } from '@/shared/config'
 
 function unauthorizedResponse() {
   return HttpResponse.json({ detail: 'Требуется авторизация' }, { status: 401 })
@@ -49,13 +29,13 @@ function calculateVacancyCount(settings: VacancySearchRequestDto) {
 
 export const handlers = [
   http.post('/api/auth/login', async ({ request }) => {
-    await delay(getDelay(500))
+    await delay(getMockDelay(500))
     const formData = new URLSearchParams(await request.text())
     const isCorrectCredentials =
       formData.get('username') === mockCredentials.username &&
       formData.get('password') === mockCredentials.password
 
-    if (getScenario() === 'invalid-login' || !isCorrectCredentials) {
+    if (getMockScenario() === 'invalid-login' || !isCorrectCredentials) {
       return HttpResponse.json({ detail: 'Неверный логин или пароль' }, { status: 401 })
     }
 
@@ -64,9 +44,9 @@ export const handlers = [
   }),
 
   http.post('/api/auth/refresh', async () => {
-    await delay(getDelay(150))
+    await delay(getMockDelay(150))
 
-    if (getScenario() === 'session-expired') {
+    if (getMockScenario() === 'session-expired') {
       clearMockSession()
     }
 
@@ -74,15 +54,15 @@ export const handlers = [
   }),
 
   http.post('/api/auth/logout', async () => {
-    await delay(getDelay(150))
+    await delay(getMockDelay(150))
     clearMockSession()
     return new HttpResponse(null, { status: 204 })
   }),
 
   http.get('/api/industries', async () => {
-    await delay(getDelay(350))
+    await delay(getMockDelay(350))
 
-    if (getScenario() === 'industries-error') {
+    if (getMockScenario() === 'industries-error') {
       return HttpResponse.json({ detail: 'Не удалось загрузить отрасли' }, { status: 500 })
     }
 
@@ -90,9 +70,9 @@ export const handlers = [
   }),
 
   http.post('/vacancy-parser/get-total-vacancies/', async ({ request }) => {
-    await delay(getDelay(600))
+    await delay(getMockDelay(600))
 
-    if (getScenario() === 'vacancy-error') {
+    if (getMockScenario() === 'vacancy-error') {
       return HttpResponse.json({ detail: 'Не удалось посчитать вакансии' }, { status: 500 })
     }
 
