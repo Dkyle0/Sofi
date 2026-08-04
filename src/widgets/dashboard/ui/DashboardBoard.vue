@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { mdiChartBoxOutline, mdiRefresh } from '@mdi/js'
+import { mdiChartBoxOutline, mdiRefresh, mdiTuneVariant } from '@mdi/js'
 import { useRouter } from 'vue-router'
 
 import {
@@ -191,7 +191,7 @@ onMounted(() => {
       :user-id="props.userId"
       :widget-bindings="widgetBindings"
     >
-      <template #toolbar>
+      <template #toolbar="{ openSettings }">
         <div class="dashboard-page__toolbar-content">
           <div class="dashboard-page__heading">
             <span class="dashboard-page__eyebrow">Личная панель</span>
@@ -204,17 +204,27 @@ onMounted(() => {
 
           <div class="dashboard-page__period">
             <span id="dashboard-period-label">Период аналитики</span>
-            <v-btn-toggle
-              :model-value="period"
-              mandatory
-              density="compact"
-              variant="text"
-              aria-labelledby="dashboard-period-label"
-              @update:model-value="setDashboardPeriod"
-            >
-              <v-btn :value="7">7 дней</v-btn>
-              <v-btn :value="30">30 дней</v-btn>
-            </v-btn-toggle>
+            <div class="dashboard-page__controls">
+              <v-btn-toggle
+                :model-value="period"
+                mandatory
+                density="compact"
+                variant="text"
+                aria-labelledby="dashboard-period-label"
+                @update:model-value="setDashboardPeriod"
+              >
+                <v-btn :value="7">7 дней</v-btn>
+                <v-btn :value="30">30 дней</v-btn>
+              </v-btn-toggle>
+              <v-btn
+                :prepend-icon="mdiTuneVariant"
+                variant="outlined"
+                color="primary"
+                @click="openSettings"
+              >
+                Настроить виджеты
+              </v-btn>
+            </div>
           </div>
         </div>
       </template>
@@ -280,6 +290,12 @@ onMounted(() => {
   gap: var(--space-1);
   color: var(--color-text-muted);
   font-size: 12px;
+}
+
+.dashboard-page__controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 .dashboard-page__period .v-btn-toggle {
@@ -361,6 +377,10 @@ onMounted(() => {
   .dashboard-page {
     min-height: calc(100dvh - 64px);
     padding: var(--space-4);
+  }
+
+  .dashboard-page__controls {
+    flex-wrap: wrap;
   }
 
   .dashboard-page__period,

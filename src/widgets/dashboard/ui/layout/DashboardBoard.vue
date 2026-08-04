@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { mdiRestore, mdiTuneVariant } from '@mdi/js'
+import { mdiRestore } from '@mdi/js'
 import { GridItem, GridLayout, type Layout } from 'grid-layout-plus'
 import { useDisplay } from 'vuetify'
 
@@ -33,7 +33,7 @@ const props = withDefaults(
 )
 
 defineSlots<{
-  toolbar?: () => unknown
+  toolbar?: (props: { openSettings: () => void }) => unknown
   widget?: (props: {
     definition: DashboardWidgetDefinition
     bindings: Record<string, unknown>
@@ -128,18 +128,7 @@ watch(
 <template>
   <section class="dashboard-board" aria-label="Персональная панель Sofi">
     <div class="dashboard-board__toolbar">
-      <div class="dashboard-board__toolbar-content">
-        <slot name="toolbar" />
-      </div>
-      <v-btn
-        class="dashboard-board__settings-button"
-        :prepend-icon="mdiTuneVariant"
-        variant="outlined"
-        color="primary"
-        @click="settingsOpen = true"
-      >
-        Настроить виджеты
-      </v-btn>
+      <slot name="toolbar" :open-settings="() => (settingsOpen = true)" />
     </div>
 
     <template v-if="hasVisibleWidgets">
@@ -247,16 +236,7 @@ watch(
 }
 
 .dashboard-board__toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
   margin-bottom: 8px;
-}
-
-.dashboard-board__toolbar-content {
-  min-width: 0;
-  flex: 1;
 }
 
 .dashboard-board__desktop-grid {
@@ -319,13 +299,7 @@ watch(
 
 @media (max-width: 599px) {
   .dashboard-board__toolbar {
-    align-items: stretch;
-    flex-direction: column;
     margin-bottom: var(--space-4);
-  }
-
-  .dashboard-board__settings-button {
-    width: 100%;
   }
 
   .dashboard-board__responsive-grid {
