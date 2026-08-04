@@ -1,3 +1,4 @@
+import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import type { IndustryItem } from '@/entities/industry'
 import { vacancySearchGateway } from '../api/vacancySearchGateway'
@@ -23,54 +24,63 @@ function isAborted(signal?: AbortSignal) {
   return signal?.aborted ?? false
 }
 
-export const useVacancySearchStore = defineStore('vacancy-search', {
-  state: () => ({
-    draft: createInitialDraft(),
-    vacanciesCount: null as number | null,
-    isCounting: false,
-    countError: null as string | null,
-    countRequestId: 0,
-  }),
+export const useVacancySearchStore = defineStore('vacancy-search', () => {
+  const draft = ref<VacancySearchDraft>(createInitialDraft())
+  const vacanciesCount = ref<number | null>(null)
+  const isCounting = ref(false)
+  const countError = ref<string | null>(null)
 
-  actions: {
-    updateDraft(patch: Partial<Omit<VacancySearchDraft, 'industries'>>) {
-      Object.assign(this.draft, patch)
-    },
+  let countRequestId = 0
 
-    setIndustries(industries: IndustryItem[]) {
-      this.draft.industries = [...industries]
-    },
+  function updateDraft(patch: Partial<Omit<VacancySearchDraft, 'industries'>>) {
+    Object.assign(draft.value, patch)
+  }
 
-    removeIndustry(industryId: string) {
-      this.draft.industries = this.draft.industries.filter((industry) => industry.id !== industryId)
-    },
+  function setIndustries(industries: IndustryItem[]) {
+    draft.value.industries = [...industries]
+  }
 
-    clearIndustries() {
-      this.draft.industries = []
-    },
+  function removeIndustry(industryId: string) {
+    draft.value.industries = draft.value.industries.filter((industry) => industry.id !== industryId)
+  }
 
-    async fetchVacanciesCount(signal?: AbortSignal) {
-      const requestId = ++this.countRequestId
-      this.isCounting = true
-      this.countError = null
+  function clearIndustries() {
+    draft.value.industries = []
+  }
 
-      try {
-        const count = await vacancySearchGateway.getCount(
-          createVacancySearchCriteria(this.draft),
-          signal,
-        )
-        if (this.countRequestId === requestId) {
-          this.vacanciesCount = count
-        }
-      } catch {
-        if (this.countRequestId === requestId && !isAborted(signal)) {
-          this.countError = 'Не удалось посчитать вакансии. Попробуйте ещё раз.'
-        }
-      } finally {
-        if (this.countRequestId === requestId) {
-          this.isCounting = false
-        }
+  async function fetchVacanciesCount(signal?: AbortSignal) {
+    const requestId = ++countRequestId
+    isCounting.value = true
+    countError.value = null
+
+    try {
+      const count = await vacancySearchGateway.getCount(
+        createVacancySearchCriteria(draft.value),
+        signal,
+      )
+      if (requestId === countRequestId) {
+        vacanciesCount.value = count
       }
-    },
-  },
+    } catch {
+      if (requestId === countRequestId && !isAborted(signal)) {
+        countError.value = 'Не удалось посчитать вакансии. Попробуйте ещё раз.'
+      }
+    } finally {
+      if (requestId === countRequestId) {
+        isCounting.value = false
+      }
+    }
+  }
+
+  return {
+    draft,
+    vacanciesCount,
+    isCounting,
+    countError,
+    updateDraft,
+    setIndustries,
+    removeIndustry,
+    clearIndustries,
+    fetchVacanciesCount,
+  }
 })

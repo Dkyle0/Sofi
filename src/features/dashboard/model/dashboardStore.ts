@@ -1,3 +1,4 @@
+import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { dashboardGateway, DashboardGatewayError } from '../api/dashboardGateway'
 import {
@@ -34,94 +35,110 @@ function getSuccessMessage(command: DashboardCommand) {
   }
 }
 
-export const useDashboardStore = defineStore('dashboard', {
-  state: () => ({
-    snapshot: null as DashboardSnapshot | null,
-    period: 30 as DashboardPeriod,
-    isLoading: false,
-    loadError: null as string | null,
-    actionError: null as string | null,
-    successMessage: null as string | null,
-    pendingCommandKeys: [] as string[],
-    loadRequestId: 0,
-  }),
+export const useDashboardStore = defineStore('dashboard', () => {
+  const snapshot = ref<DashboardSnapshot | null>(null)
+  const period = ref<DashboardPeriod>(30)
+  const isLoading = ref(false)
+  const loadError = ref<string | null>(null)
+  const actionError = ref<string | null>(null)
+  const successMessage = ref<string | null>(null)
+  const pendingCommandKeys = ref<string[]>([])
 
-  getters: {
-    selectedFunnel: (state) => state.snapshot?.funnel[state.period] ?? null,
-    selectedDynamics: (state) => state.snapshot?.dynamics[state.period] ?? [],
-    automationQuota: (state) => {
-      if (!state.snapshot) {
-        return null
+  let loadRequestId = 0
+
+  const selectedFunnel = computed(() => snapshot.value?.funnel[period.value] ?? null)
+  const selectedDynamics = computed(() => snapshot.value?.dynamics[period.value] ?? [])
+
+  const automationQuota = computed(() => {
+    if (!snapshot.value) {
+      return null
+    }
+
+    return {
+      sent: snapshot.value.automation.sentToday,
+      limit: snapshot.value.automation.dailyLimit,
+    }
+  })
+
+  function isCommandPending(command: DashboardCommand) {
+    return pendingCommandKeys.value.includes(getDashboardCommandKey(command))
+  }
+
+  function setPeriod(value: DashboardPeriod) {
+    period.value = value
+  }
+
+  function clearFeedback() {
+    actionError.value = null
+    successMessage.value = null
+  }
+
+  async function load(signal?: AbortSignal) {
+    const requestId = ++loadRequestId
+    isLoading.value = true
+    loadError.value = null
+
+    try {
+      const data = await dashboardGateway.getSnapshot(signal)
+      if (requestId === loadRequestId) {
+        snapshot.value = data
       }
-
-      return {
-        sent: state.snapshot.automation.sentToday,
-        limit: state.snapshot.automation.dailyLimit,
+    } catch (error) {
+      if (requestId === loadRequestId && !isAbortError(error)) {
+        snapshot.value = null
+        loadError.value = getErrorMessage(
+          error,
+          'Не удалось загрузить данные dashboard. Попробуйте ещё раз.',
+        )
       }
-    },
-    isCommandPending: (state) => (command: DashboardCommand) =>
-      state.pendingCommandKeys.includes(getDashboardCommandKey(command)),
-  },
-
-  actions: {
-    setPeriod(period: DashboardPeriod) {
-      this.period = period
-    },
-
-    clearFeedback() {
-      this.actionError = null
-      this.successMessage = null
-    },
-
-    async load(signal?: AbortSignal) {
-      const requestId = ++this.loadRequestId
-      this.isLoading = true
-      this.loadError = null
-
-      try {
-        const snapshot = await dashboardGateway.getSnapshot(signal)
-        if (this.loadRequestId === requestId) {
-          this.snapshot = snapshot
-        }
-      } catch (error) {
-        if (this.loadRequestId === requestId && !isAbortError(error)) {
-          this.snapshot = null
-          this.loadError = getErrorMessage(
-            error,
-            'Не удалось загрузить данные dashboard. Попробуйте ещё раз.',
-          )
-        }
-      } finally {
-        if (this.loadRequestId === requestId) {
-          this.isLoading = false
-        }
+    } finally {
+      if (requestId === loadRequestId) {
+        isLoading.value = false
       }
-    },
+    }
+  }
 
-    async execute(command: DashboardCommand, signal?: AbortSignal) {
-      const commandKey = getDashboardCommandKey(command)
-      if (this.pendingCommandKeys.includes(commandKey)) {
-        return false
+  async function execute(command: DashboardCommand, signal?: AbortSignal) {
+    const commandKey = getDashboardCommandKey(command)
+    if (pendingCommandKeys.value.includes(commandKey)) {
+      return false
+    }
+
+    pendingCommandKeys.value = [...pendingCommandKeys.value, commandKey]
+    clearFeedback()
+
+    try {
+      snapshot.value = await dashboardGateway.execute(command, signal)
+      successMessage.value = getSuccessMessage(command)
+      return true
+    } catch (error) {
+      if (!isAbortError(error)) {
+        actionError.value = getErrorMessage(
+          error,
+          'Не удалось выполнить действие. Попробуйте ещё раз.',
+        )
       }
+      return false
+    } finally {
+      pendingCommandKeys.value = pendingCommandKeys.value.filter((key) => key !== commandKey)
+    }
+  }
 
-      this.pendingCommandKeys.push(commandKey)
-      this.clearFeedback()
-
-      try {
-        this.snapshot = await dashboardGateway.execute(command, signal)
-        this.successMessage = getSuccessMessage(command)
-        return true
-      } catch (error) {
-        if (!isAbortError(error)) {
-          this.actionError = getErrorMessage(
-            error,
-            'Не удалось выполнить действие. Попробуйте ещё раз.',
-          )
-        }
-        return false
-      } finally {
-        this.pendingCommandKeys = this.pendingCommandKeys.filter((key) => key !== commandKey)
-      }
-    },
-  },
+  return {
+    snapshot,
+    period,
+    isLoading,
+    loadError,
+    actionError,
+    successMessage,
+    pendingCommandKeys,
+    selectedFunnel,
+    selectedDynamics,
+    automationQuota,
+    isCommandPending,
+    setPeriod,
+    clearFeedback,
+    load,
+    execute,
+  }
 })

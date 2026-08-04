@@ -1,54 +1,59 @@
+import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import type { User } from '@/entities/user'
 import { authGateway, type Credentials } from '../api/authGateway'
 
-export const useAuthStore = defineStore('auth', {
-  state: () => ({
-    user: null as User | null,
-    isLoading: false,
-  }),
+export const useAuthStore = defineStore('auth', () => {
+  const user = ref<User | null>(null)
+  const isLoading = ref(false)
 
-  getters: {
-    isAuthenticated: (state) => state.user !== null,
-  },
+  const isAuthenticated = computed(() => user.value !== null)
 
-  actions: {
-    clearSession() {
-      this.user = null
-    },
+  function clearSession() {
+    user.value = null
+  }
 
-    async login(credentials: Credentials) {
-      this.isLoading = true
-      try {
-        this.user = await authGateway.login(credentials)
-        return true
-      } catch {
-        this.clearSession()
-        return false
-      } finally {
-        this.isLoading = false
-      }
-    },
+  async function login(credentials: Credentials) {
+    isLoading.value = true
+    try {
+      user.value = await authGateway.login(credentials)
+      return true
+    } catch {
+      clearSession()
+      return false
+    } finally {
+      isLoading.value = false
+    }
+  }
 
-    async logout() {
-      this.isLoading = true
-      try {
-        await authGateway.logout()
-      } catch {
-        // Local session must still end when the server cannot acknowledge logout.
-      } finally {
-        this.clearSession()
-        this.isLoading = false
-      }
-    },
+  async function logout() {
+    isLoading.value = true
+    try {
+      await authGateway.logout()
+    } catch {
+      // Local session must still end when the server cannot acknowledge logout.
+    } finally {
+      clearSession()
+      isLoading.value = false
+    }
+  }
 
-    async restoreSession() {
-      this.isLoading = true
-      try {
-        this.user = await authGateway.restoreSession()
-      } finally {
-        this.isLoading = false
-      }
-    },
-  },
+  async function restoreSession() {
+    isLoading.value = true
+    try {
+      user.value = await authGateway.restoreSession()
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  return {
+    user,
+    isLoading,
+    isAuthenticated,
+    clearSession,
+    login,
+    logout,
+    restoreSession,
+  }
 })
